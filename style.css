@@ -15,7 +15,6 @@ label {
     align-items: center;
 }
 
-
 .display {
     width: 100%;
     height: 30%;
@@ -26,6 +25,7 @@ label {
     font-size: 25px;
     color: #B2B1B9;
 }
+
 .container {
     background-color: #444444;
     border: 4px black solid;
