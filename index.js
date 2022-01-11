@@ -1,6 +1,9 @@
 let operatorPressed = false;
 let numList = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."]
+let process;
+let result;
 
+// This function is to prevent overflowing from the screen
 function isOverflow(){
     if ($(`.process`).text().length > 14){
         $(`.process`).addClass("overflow")
@@ -12,10 +15,11 @@ function isOverflow(){
 function clearLabels(){
     $(".result").text("")
     $(".process").text("0")
+    isOverflow();
 }
 
 function backSpace(){
-    let process = $(".process").text()
+    process = $(".process").text()
     if (process !== "0"){
         process = process.slice(0, process.length-1)
         if (process === "" || process === "-") process = "0"
@@ -24,18 +28,22 @@ function backSpace(){
     isOverflow();
 }
 
+// This function takes the square root of the number
 function square(){
-    let process = $(".process").text()
+    process = $(".process").text()
     process = (Math.round((+process * +process) * 100)) / 100
     $(".process").text(String(process))
+    operatorPressed = false;
     isOverflow();
 }
 
-function operate(calculation){
-    calculation = calculation.split(" ")
-    let a = +calculation[0]
-    let b = +calculation[2]
-    let operatr = calculation[1]
+// This function does the mathematical calculations
+function operate(operation){
+    operation = operation.split(" ")
+    let a = +operation[0]
+    let b = +operation[2]
+    let operatr = operation[1]
+    
     if (!b && b === "0") return
 
     switch (operatr){
@@ -55,42 +63,39 @@ function operate(calculation){
 }
 
 function equals(){
-    
-    let process = $(".process").text()
-    let result = $(".result").text()
-    let resList = result.trim().split(" ")
-    
-    console.log(resList)
-    if (!operatorPressed && resList.length !== 3){
-        let calculation = operate(result + process)
-        console.log(calculation)
+    result = $(".result").text()
+    process = $(".process").text()
+
+    if (!operatorPressed && !result.includes("=")){
+        let calculation = operate(result + process);
         if (calculation){
-            $(".result").text(result + process)
+            $(".result").text(result + process + " = ")
             $(".process").text(calculation)
         }
         operatorPressed = true
     }
-    
     isOverflow();
 }
 
-function operator(e){
-    let operator;
-    if (e === "*") operator = "x"
-    else operator = e
+function operatorSign(e){
+    result = $(".result").text()
+    process = $(".process").text()
 
-    let process = $(".process").text()
-    let result = $(".result").text()
+    if (e === "*") e = "x";
+    $(".result").text(process + " " + e + " ")
     let resList = result.trim().split(" ")
     
-    if (!result) $(".result").text(process + " " + operator + " ") 
-    else if (resList.length === 2) $(".result").text(resList[0] + " " + operator + " ")
-    else if (resList.length === 3) $(".result").text(operate(result) + " " + operator + " ") 
-
-    else if (!operatorPressed){
+    if (!result) $(".result").text(process + " " + e + " ") 
+    else if (resList.length === 2) $(".result").text(resList[0] + " " + e + " ")
+    else if (result.includes("=") && !operatorPressed) {
+        $(".result").text($(".process").text() + " " + e + " ")
+        operatorPressed = true;
+        return;
+    }  
+    if (!operatorPressed){
         let calculation = operate(result + process)
         if (calculation){
-            $(".result").text(calculation + " " + operator + " ")
+            $(".result").text(calculation + " " + e + " ")
         }
     }
     operatorPressed = true;
@@ -98,7 +103,7 @@ function operator(e){
 }
 
 function numbers(typed){
-    let process = $(".process").text();
+    process = $(".process").text();
     if (typed === "." && process.includes(".")) return;
 
     if (operatorPressed === true){
@@ -115,8 +120,17 @@ function numbers(typed){
     isOverflow();
 }
 
-$(".change-sign").click(function(){
-    let process = $(".process").text()
+// This listener enables the keyboard functionality
+$(window).keydown(function(e){ 
+    if (e.code === "Backspace") backSpace();
+    else if (e.code === "Escape") clearLabels();
+    else if (e.code === "Enter" || e.code === "NumpadEnter") equals();
+    else if (e.code === "NumpadAdd" || e.code === "NumpadSubtract" || e.code === "NumpadMultiply" || e.code === "NumpadDivide") operatorSign(e.key);
+    else if (numList.includes(e.key)) numbers(e.key);
+});
+
+$(".change-sign").click(function(e){
+    process = $(".process").text()
 
     if (process !== "0"){
         if (process.startsWith("-")){
@@ -127,29 +141,34 @@ $(".change-sign").click(function(){
         $(".process").text(process)
     }
     isOverflow();
+    e.target.blur();
 })
 
-$(".backspace").click(backSpace);
+$(".backspace").click(function(e){
+    backSpace();
+    e.target.blur();
+} );
 
-$(window).keydown(function(e){
-    
-    if (e.code === "Backspace") backSpace();
-    else if (e.code === "Escape") clearLabels();
-    else if (e.code === "Enter" || e.code === "NumpadEnter") equals();
-    else if (e.code === "NumpadAdd" || e.code === "NumpadSubtract" || e.code === "NumpadMultiply" || e.code === "NumpadDivide") operator(e.key);
-    else if (numList.includes(e.key)) numbers(e.key);
-});
-
-$(".clear").click(clearLabels);
-$(".square").click(square);
-$(".equals").click(equals);
+$(".clear").click(function(e){
+    clearLabels();
+    e.target.blur();
+} );
+$(".square").click(function(e){
+   square();
+   e.target.blur();
+} );
+$(".equals").click(function(e){
+    equals();
+    e.target.blur();
+} );
 
 $(".operator").click(function(e){
-    operator(e.target.textContent)
+    operatorSign(e.target.textContent)
+    e.target.blur();
 })
-
 
 $(".num").click(function(e){
-    let typed = e.target.innerText;
-    numbers(typed);
+    numbers(e.target.innerText);
+    e.target.blur();
 })
+
